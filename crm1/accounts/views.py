@@ -12,7 +12,7 @@ from django.contrib.auth.models import Group
 
 # Create your views here.
 from .models import *
-from .forms import CustomerForm, OrderForm, CreateUserForm
+from .forms import OrderForm, CreateUserForm, CustomerForm
 from .filters import OrderFilter
 from .decorators import unauthenticated_user, allowed_users, admin_only
 
@@ -26,11 +26,6 @@ def registerPage(request):
 			user = form.save()
 			username = form.cleaned_data.get('username')
 
-			group = Group.objects.get(name='customer')
-			user.groups.add(group)
-			Customer.objects.create(
-				user=user
-			)
 
 			messages.success(request, 'Account was created for ' + username)
 
@@ -89,13 +84,11 @@ def userPage(request):
 	delivered = orders.filter(status='Delivered').count()
 	pending = orders.filter(status='Pending').count()
 
+	print('ORDERS:', orders)
 
-	print('Order', orders)
-
-	context = {'orders': orders,'total_orders':total_orders,'delivered':delivered,
-	'pending':pending}
+	context = {'orders':orders, 'total_orders':total_orders,
+	'delivered':delivered,'pending':pending}
 	return render(request, 'accounts/user.html', context)
-
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['customer'])
@@ -104,12 +97,16 @@ def accountSettings(request):
 	form = CustomerForm(instance=customer)
 
 	if request.method == 'POST':
-		form = CustomerForm(request.POST, request.FILES, instance=customer)
+		form = CustomerForm(request.POST, request.FILES,instance=customer)
 		if form.is_valid():
 			form.save()
 
-	context = {'form': form}
+
+	context = {'form':form}
 	return render(request, 'accounts/account_settings.html', context)
+
+
+
 
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
@@ -154,11 +151,11 @@ def createOrder(request, pk):
 @login_required(login_url='login')
 @allowed_users(allowed_roles=['admin'])
 def updateOrder(request, pk):
-
 	order = Order.objects.get(id=pk)
 	form = OrderForm(instance=order)
-
+	print('ORDER:', order)
 	if request.method == 'POST':
+
 		form = OrderForm(request.POST, instance=order)
 		if form.is_valid():
 			form.save()
