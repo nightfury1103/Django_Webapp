@@ -27,10 +27,10 @@ def registerPage(request):
 			username = form.cleaned_data.get('username')
 
 
-			messages.success(request, 'Account was created for ' + username)
+			messages.success(request, f'Account was created for {username}')
 
 			return redirect('login')
-		
+
 
 	context = {'form':form}
 	return render(request, 'accounts/register.html', context)
